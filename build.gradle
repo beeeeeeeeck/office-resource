@@ -1,0 +1,154 @@
+apply from: file("${rootDir}/gradle/project.gradle")
+
+subprojects {
+    group = 'core.demo'
+    version = '1.0.0'
+
+    repositories {
+        maven {
+            url 'https://neowu.github.io/maven-repo/'
+            content {
+                includeGroup 'core.framework'
+            }
+        }
+    }
+}
+
+def coreNGVersion = '7.5.10'
+def mysqlVersion = '8.0.22'
+def hsqlVersion = '2.5.1'
+
+configure(subprojects.findAll { it.name.endsWith('-db-migration') }) {
+    apply from: file("${rootDir}/gradle/db-migration.gradle")
+    dependencies {
+        runtimeOnly "mysql:mysql-connector-java:${mysqlVersion}"
+    }
+}
+
+configure(subprojects.findAll { it.name.endsWith('-mongo-migration') }) {
+    apply from: file("${rootDir}/gradle/app.gradle")
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        implementation "core.framework:core-ng-mongo:${coreNGVersion}"
+    }
+    tasks.register('mongoMigrate') {
+        dependsOn run
+    }
+}
+
+configure(project(':common')) {
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-test:${coreNGVersion}"
+    }
+}
+
+configure(subprojects.findAll { it.name.matches('.*-service-interface') }) {
+    dependencies {
+        implementation "core.framework:core-ng-api:${coreNGVersion}"
+        implementation project(':common')
+    }
+}
+
+configure(subprojects.findAll { it.name.matches('.*site-interface') }) {
+    dependencies {
+        implementation "core.framework:core-ng-api:${coreNGVersion}"
+        implementation project(':common')
+    }
+}
+
+configure([project(':bo-site'),
+           project(':device-service'),
+           project(':interview-service'),
+           project(':staff-service'),
+           project(':notification-service'),
+           project(':schedule-service'),
+           project(':user-service'),
+           project(':website')]) {
+    apply from: file("${rootDir}/gradle/app.gradle")
+    dependencies {
+        implementation "core.framework:core-ng:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-test:${coreNGVersion}"
+        implementation project(':common')
+    }
+}
+
+configure(project(':bo-site')) {
+    dependencies {
+        implementation project(':bo-site-interface')
+        implementation project(':device-service-interface')
+        implementation project(':interview-service-interface')
+        implementation project(':staff-service-interface')
+        implementation project(':user-service-interface')
+    }
+}
+
+configure([project(':device-service')]) {
+    dependencies {
+        implementation project(':device-service-interface')
+    }
+}
+
+configure([project(':interview-service')]) {
+    dependencies {
+        implementation project(':interview-service-interface')
+        implementation project(':notification-service-interface')
+    }
+}
+
+configure([project(':schedule-service')]) {
+    dependencies {
+        implementation project(':device-service-interface')
+        implementation project(':interview-service-interface')
+        implementation project(':staff-service-interface')
+        implementation project(':user-service-interface')
+    }
+}
+
+configure([project(':staff-service')]) {
+    dependencies {
+        implementation project(':staff-service-interface')
+    }
+}
+
+configure([project(':user-service')]) {
+    dependencies {
+        implementation project(':user-service-interface')
+    }
+}
+
+configure([project(':notification-service')]) {
+    dependencies {
+        implementation project(':notification-service-interface')
+    }
+}
+
+configure([project(':device-service'),
+           project(':interview-service'),
+           project(':staff-service'),
+           project(':user-service')]) {
+    dependencies {
+        runtimeOnly "mysql:mysql-connector-java:${mysqlVersion}"
+        testRuntimeOnly "org.hsqldb:hsqldb:${hsqlVersion}"
+    }
+}
+
+configure([project(':interview-service'),
+           project(':staff-service')]) {
+    dependencies {
+        implementation "core.framework:core-ng-mongo:${coreNGVersion}"
+        testImplementation "core.framework:core-ng-mongo-test:${coreNGVersion}"
+    }
+}
+
+configure(project(':website')) {
+    dependencies {
+        implementation project(':website-interface')
+        implementation project(':device-service-interface')
+        implementation project(':interview-service-interface')
+        implementation project(':staff-service-interface')
+    }
+}
+
+project(':website') {
+}
