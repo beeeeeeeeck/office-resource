@@ -1,1 +1,1 @@
-# company resource
+# office resource
